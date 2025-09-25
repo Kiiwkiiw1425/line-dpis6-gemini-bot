@@ -18,12 +18,6 @@ app = Flask(__name__)
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# --- Define System Instruction at the global scope ---
-SYSTEM_PROMPT = (
-    "คุณคือ AI ผู้เชี่ยวชาญด้าน Line OA ที่มีบุคลิกสุภาพ และเป็นทางการ "
-    "จงตอบคำถามผู้ใช้ด้วยข้อมูลที่ถูกต้องและกระชับ"
-)
-
 # --- Initialize Gemini API model instance ---
 # We check if the key exists and then try to configure the model.
 gemini_model = None
