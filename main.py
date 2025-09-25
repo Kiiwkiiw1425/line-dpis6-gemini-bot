@@ -8,7 +8,8 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 # ใช้ os.environ.get เพื่อดึงค่าที่เราตั้งไว้บน Render (เพื่อความปลอดภัย)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY') # เราจะใช้ในภายหลัง
+# GEMINI_API_KEY ถูกดึงมาแล้ว แต่ยังไม่ถูกเรียกใช้จริงใน PoC นี้
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY') 
 
 app = Flask(__name__)
 
@@ -25,15 +26,16 @@ def callback():
 
     # รับ Request body ทั้งหมด
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
 
-    # จัดการ Webhook body
+    # จัดการ Webhook body และตรวจสอบลายเซ็น
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
+        # หากเกิด InvalidSignatureError ให้ Log และ Abort ด้วย 400
         print("Invalid signature. Please check your channel access token/secret.")
         abort(400)
 
+    # สำคัญ: ต้องตอบกลับด้วย 'OK' และ HTTP Status 200
     return 'OK'
 
 # --- 3. Logic การตอบกลับ (PoC) ---
@@ -45,7 +47,6 @@ def handle_message(event):
     if user_message.lower() in ["สวัสดี", "hello"]:
         reply_text = "สวัสดีครับ! ผมคือ AI ผู้เชี่ยวชาญ DPIS6 ตอนนี้ระบบเชื่อมต่อสำเร็จแล้ว รอการติดตั้งสมองกล Gemini ที่อัปเกรดข้อมูลแล้วครับ"
     else:
-        # ใน PoC เรายังไม่เรียก Gemini API
         reply_text = "ผมได้รับข้อความของคุณแล้ว (PoC Success!)"
 
     line_bot_api.reply_message(
