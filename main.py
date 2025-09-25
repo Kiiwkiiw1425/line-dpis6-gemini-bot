@@ -58,3 +58,10 @@ if __name__ == "__main__":
     # Render จะใช้ Environment Variable 'PORT' เพื่อรัน
     port = int(os.environ.get('PORT', 5000)) 
     app.run(host='0.0.0.0', port=port)
+
+
+# --- 4. Health Check Endpoint สำหรับ Kuma Ping ---
+# End-point นี้จะตอบกลับด้วย 'OK' ทันทีเมื่อถูกเรียก
+@app.route("/", methods=['GET'])
+def home():
+    return 'OK', 200
