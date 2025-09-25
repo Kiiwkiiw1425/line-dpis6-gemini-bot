@@ -1,0 +1,8 @@
+# Library สำหรับสร้าง Webhook Server และจัดการ Request
+flask
+
+# Library สำหรับจัดการ Line Messaging API
+line-bot-sdk
+
+# Library สำหรับเรียกใช้ Gemini API
+google-genai
