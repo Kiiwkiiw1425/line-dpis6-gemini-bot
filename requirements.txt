@@ -6,3 +6,5 @@ line-bot-sdk
 
 # Library สำหรับเรียกใช้ Gemini API
 google-genai
+
+gunicorn
