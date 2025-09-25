@@ -1,1 +1,29 @@
+# ------------------
+# Python Specific Files
+# ------------------
+# Compiled source files
+*.pyc
+__pycache__/
 
+# Virtual environment directory
+venv/
+.venv/
+env/
+
+# IDE/Editor files (VS Code, Pycharm)
+.vscode/
+.idea/
+
+# ------------------
+# Security & Logs (Crucial for Webhooks)
+# ------------------
+# Local environment variables file (NEVER commit this!)
+.env
+.flaskenv
+
+# Log files
+*.log
+logs/
+
+# Database files (if using a local SQLite DB for testing)
+*.db
