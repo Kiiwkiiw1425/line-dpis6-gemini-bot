@@ -24,7 +24,7 @@ genai.configure(api_key=AI_API_KEY)
 model = genai.GenerativeModel('models/gemini-2.5-flash-lite') 
 
 # --- 4. Define the Webhook endpoint ---
-@app.route("/", methods=['POST'])
+@app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
