@@ -8,3 +8,5 @@ line-bot-sdk
 google-generativeai
 
 gunicorn
+
+chromadb
