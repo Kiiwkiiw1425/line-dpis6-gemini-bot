@@ -8,9 +8,9 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 # --- 1. Load Environment Variables from Render ---
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+AI_API_KEY = os.environ.get('AI_API_KEY')
 
-if not all([LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, GEMINI_API_KEY]):
+if not all([LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, AI_API_KEY]):
     raise ValueError("One or more environment variables are not set.")
 
 # --- 2. Initialize Flask and Line Bot API ---
@@ -19,7 +19,7 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 # --- 3. Configure Gemini AI ---
-genai.configure(api_key=GEMINI_API_KEY)
+genai.configure(api_key=AI_API_KEY)
 # Use Gemini 2.5 Flash-Lite model
 model = genai.GenerativeModel('models/gemini-2.5-flash-lite') 
 
