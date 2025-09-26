@@ -58,6 +58,11 @@ def handle_message(event):
         TextSendMessage(text=ai_response)
     )
 
-# --- 6. Run the Flask app ---
+# --- 6. Add a root route for health check ---
+@app.route("/", methods=['GET'])
+def health_check():
+    return 'Your service is running!', 200
+
+# --- 7. Run the Flask app ---
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
