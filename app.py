@@ -8,10 +8,12 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 # --- 1. ตั้งค่า Environment Variables (ต้องกำหนดใน Render) ---
 app = Flask(__name__)
+# ตรวจสอบว่าได้ตั้งค่า 3 ตัวแปรนี้บน Render แล้ว
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') # URL ของ Open WebUI Server
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           # API Key ที่กำหนดใน Open WebUI
+# นี่คือ IP Address ภายในที่ได้รับอนุญาตจาก Firewall
+OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -49,7 +51,9 @@ def handle_message(event):
             )
             
         except Exception as e:
-            print(f"Error processing AI response: {e}")
+            # บันทึกข้อผิดพลาดที่เกิดขึ้น
+            error_message = f"Error processing AI response: {e}"
+            print(error_message)
             # ส่งข้อความ Error กลับ (สำหรับ debug)
             line_bot_api.reply_message(
                 event.reply_token,
@@ -60,17 +64,20 @@ def handle_message(event):
 def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
     
-    # Open WebUI มักใช้ API ที่เข้ากันได้กับ OpenAI
-    url = f"{OPENAI_API_BASE_URL}/v1/chat/completions" 
-    
+    # Path ที่เป็นไปได้สำหรับ Open WebUI
+    possible_endpoints = [
+        "/v1/chat/completions",         # 1. Path มาตรฐาน (OpenAI API Compatible)
+        "/api/v1/chat/completions"      # 2. Path ที่มี /api/ นำหน้า
+    ]
+
     headers = {
-        # ใช้ Key ที่ตั้งไว้ใน Open WebUI (สำคัญมาก)
         "Authorization": f"Bearer {OPENAI_API_KEY}", 
         "Content-Type": "application/json"
     }
     
     payload = {
-        "model": "gemini-2.5-flash",  # ต้องระบุ Model ที่ Open WebUI เชื่อมต่อไว้
+        # ยืนยันว่า Model นี้ถูกตั้งค่าใน Open WebUI Server ของคุณแล้ว
+        "model": "gemini-2.5-flash", 
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
@@ -78,15 +85,39 @@ def get_ai_response(prompt):
         "temperature": 0.7 
     }
     
-    response = requests.post(url, headers=headers, json=payload, timeout=30)
-    response.raise_for_status() # ตรวจสอบสถานะ HTTP Error
-    
-    data = response.json()
-    
-    # ดึงข้อความจากโครงสร้าง Response ของ OpenAI-compatible API
-    ai_text = data['choices'][0]['message']['content']
-    
-    return ai_text
+    last_exception = None
+
+    for endpoint in possible_endpoints:
+        url = f"{OPENAI_API_BASE_URL}{endpoint}"
+        
+        try:
+            print(f"Attempting to call URL: {url}")
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response.raise_for_status() # ตรวจสอบสถานะ HTTP Error (2xx)
+            
+            data = response.json()
+            # ถ้าสำเร็จ ให้ออกจากลูปและคืนค่า
+            ai_text = data['choices'][0]['message']['content']
+            return ai_text
+            
+        except requests.exceptions.RequestException as e:
+            # บันทึก exception ล่าสุด เผื่อไว้แสดง error
+            last_exception = e
+            print(f"Failed attempt on {url}: {e}")
+            # ถ้าเป็น 404/403 ให้ลอง endpoint ถัดไป
+            if response.status_code in [403, 404]:
+                continue
+            else:
+                # ถ้าเป็น error อื่นที่ไม่ใช่ 403/404 อาจเป็นปัญหาใหญ่ ให้หยุดลอง
+                raise
+
+    # ถ้าลองทุก endpoint แล้วไม่สำเร็จ ให้แสดง exception ล่าสุดที่เกิดขึ้น
+    if last_exception:
+        raise last_exception
+    else:
+        # กรณีที่ไม่มี exception แต่ไม่ได้รับคำตอบที่ถูกต้อง
+        raise Exception("API connection failed after trying all endpoints.")
+
 
 # --- 5. สำหรับรันบน Render ---
 if __name__ == "__main__":
