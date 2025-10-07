@@ -18,6 +18,16 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+# --- NEW: Health Check Endpoint เพื่อป้องกันการ Sleep บน Render ---
+@app.route("/ping", methods=['GET'])
+def health_check():
+    """
+    Endpoint นี้ถูกสร้างขึ้นเพื่อให้ Uptime Kuma หรือเครื่องมือภายนอกเรียกใช้
+    เพื่อตรวจสอบสถานะของแอปพลิเคชัน และป้องกันไม่ให้ Render เข้าสู่สถานะ Idle (Sleep)
+    """
+    return 'OK', 200
+# --- END NEW Endpoint ---
+
 # --- 2. Webhook Endpoint ที่ Line จะเรียก ---
 @app.route("/webhook", methods=['POST'])
 def webhook():
