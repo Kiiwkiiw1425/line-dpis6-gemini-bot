@@ -84,7 +84,8 @@ def get_ai_response(prompt):
 
     payload = {
         #Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
-        "model": "hrms-dpis6",
+        #"model": "hrms-dpis6",
+        "model": "Gemini-2.0-flash-lite",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
