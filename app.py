@@ -83,8 +83,8 @@ def get_ai_response(prompt):
     url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
 
     payload = {
-        # Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
-        "model": "hrms-dpis6",
+        #Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
+        "model": "HRMS OCSC",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
