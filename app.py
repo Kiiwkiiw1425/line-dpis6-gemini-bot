@@ -10,9 +10,7 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-# URL/IP ของ Open WebUI Server (ตัวอย่าง: https://chatline.ocsc.go.th)
-OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
-# API Key ที่กำหนดใน Open WebUI (ต้องเป็น Key ที่ถูกต้อง)
+OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
