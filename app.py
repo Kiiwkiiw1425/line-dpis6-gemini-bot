@@ -6,27 +6,28 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
-# --- 1. ตั้งค่า Environment Variables (ต้องกำหนดใน Render) ---
+# --- ตั้งค่า Environment Variables (กำหนดค่าใน Render) ---
 app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL')
+# URL/IP ของ Open WebUI Server (ตัวอย่าง: https://chatline.ocsc.go.th)
+OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
+# API Key ที่กำหนดใน Open WebUI (ต้องเป็น Key ที่ถูกต้อง)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# --- NEW: Health Check Endpoint เพื่อป้องกันการ Sleep บน Render ---
+# --- Health Check Endpoint เพื่อป้องกันการ Sleep บน Render ---
 @app.route("/ping", methods=['GET'])
 def health_check():
     """
-    Endpoint นี้ถูกสร้างขึ้นเพื่อให้ Uptime Kuma หรือเครื่องมือภายนอกเรียกใช้
-    เพื่อตรวจสอบสถานะของแอปพลิเคชัน และป้องกันไม่ให้ Render เข้าสู่สถานะ Idle (Sleep)
+    Endpoint นี้ถูกสร้างขึ้นเพื่อให้ Uptime Kuma เรียกใช้ เพื่อตรวจสอบสถานะ
+    และป้องกันไม่ให้ Render เข้าสู่สถานะ Idle (Sleep)
     """
     return 'OK', 200
-# --- END NEW Endpoint ---
 
-# --- 2. Webhook Endpoint ที่ Line จะเรียก ---
+# --- Webhook Endpoint ที่ Line จะเรียก ---
 @app.route("/webhook", methods=['POST'])
 def webhook():
     signature = request.headers['X-Line-Signature']
@@ -41,7 +42,7 @@ def webhook():
 
     return 'OK'
 
-# --- 3. การจัดการข้อความ (Logic หลัก) ---
+# --- การจัดการข้อความ (Logic หลัก) ---
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_message = event.message.text
@@ -66,18 +67,18 @@ def handle_message(event):
                 TextSendMessage(text="ขออภัยค่ะ ระบบ AI ขัดข้องชั่วคราว: " + str(e))
             )
 
-# --- 4. ฟังก์ชันเชื่อมต่อ Open WebUI/Gemini ---
-def get_ai_response(prompt):
+# --- ฟังก์ชันเชื่อมต่อ Open WebUI/Gemini ---
+    def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
-    # 1. กำหนด Header โดยใช้ Authorization: Bearer
+    # กำหนด Header โดยใช้ Authorization: Bearer
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {OPENAI_API_KEY}"
+        "Authorization": f"Bearer {OPENAI_API_KEY}" # ส่ง API Key ผ่าน Header
     }
     
-    # 2. URL สำหรับ OpenAI-compatible API
-    url = f"{OPENAI_API_BASE_URL}/api/chat/completions"
+    # URL สำหรับ OpenAI-compatible API
+    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
 
     payload = {
         # Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
@@ -100,7 +101,7 @@ def get_ai_response(prompt):
 
     return ai_text
 
-# --- 5. สำหรับรันบน Render ---
+# --- สำหรับรันบน Render ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
