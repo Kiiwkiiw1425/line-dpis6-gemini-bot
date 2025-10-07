@@ -10,8 +10,9 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
+# *** FIX: ลบ U+00A0 ออกจากบรรทัดด้านล่าง ***
 OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') # URL/IP ของ Open WebUI Server
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           # API Key ที่กำหนดใน Open WebUI
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           # API Key ที่กำหนดใน Open WebUI
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -60,22 +61,18 @@ def handle_message(event):
 def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
-    # *** FIX 1: แก้ไขข้อผิดพลาด 'headers' is not defined ***
-    # ต้องกำหนด dictionary ของ headers สำหรับส่งใน request
+    # กำหนด headers สำหรับการส่ง JSON
     headers = {
         "Content-Type": "application/json"
-        # หาก Open WebUI ต้องการ API Key ในรูปแบบ Bearer Token
-        # ให้ยกเลิกการส่งใน URL และเพิ่มบรรทัดนี้แทน:
-        # "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
 
     # Open WebUI มักต้องการ /api/v1/chat/completions
+    # เราใช้ OPENAI_API_KEY เป็น Query Parameter ตามที่คุณได้ตั้งค่าไว้
     url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions?key={OPENAI_API_KEY}"
 
     payload = {
-        # *** FIX 2: ลบ key 'model' ที่ซ้ำออก เหลือไว้เฉพาะตัวที่ใช้งานจริง ***
         # Model Name ต้องตรงกับ Model ID ที่ตั้งค่าไว้ใน Open WebUI
-        "model": "hrms-dpis6",  
+        "model": "hrms-dpis6",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
@@ -83,7 +80,6 @@ def get_ai_response(prompt):
         "temperature": 0.5
     }
 
-    # เพิ่ม headers=headers ที่ถูกต้องเข้าไปใน request
     response = requests.post(url, headers=headers, json=payload, timeout=30)
     response.raise_for_status() # ตรวจสอบสถานะ HTTP Error
 
