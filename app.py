@@ -10,9 +10,10 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
-# *** FIX: ลบ U+00A0 ออกจากบรรทัดด้านล่าง ***
-OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') # URL/IP ของ Open WebUI Server
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           # API Key ที่กำหนดใน Open WebUI
+# URL/IP ของ Open WebUI Server (ตัวอย่าง: https://chatline.ocsc.go.th)
+OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
+# API Key ที่กำหนดใน Open WebUI (ต้องเป็น Key ที่ถูกต้อง)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -50,8 +51,8 @@ def handle_message(event):
             )
 
         except Exception as e:
+            # รายงาน Error กลับไปเพื่อให้ผู้ใช้ทราบถึงปัญหา
             print(f"Error processing AI response: {e}")
-            # ส่งข้อความ Error กลับ (สำหรับ debug)
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text="ขออภัยค่ะ ระบบ AI ขัดข้องชั่วคราว: " + str(e))
@@ -61,17 +62,17 @@ def handle_message(event):
 def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
-    # กำหนด headers สำหรับการส่ง JSON
+    # 1. กำหนด Header โดยใช้ Authorization: Bearer
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}" # นี่คือส่วนที่แก้ไข
     }
-
-    # Open WebUI มักต้องการ /api/v1/chat/completions
-    # เราใช้ OPENAI_API_KEY เป็น Query Parameter ตามที่คุณได้ตั้งค่าไว้
-    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions?key={OPENAI_API_KEY}"
+    
+    # 2. URL สำหรับ OpenAI-compatible API (ไม่มี ?key=... ต่อท้าย)
+    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
 
     payload = {
-        # Model Name ต้องตรงกับ Model ID ที่ตั้งค่าไว้ใน Open WebUI
+        # Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
         "model": "hrms-dpis6",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
@@ -80,8 +81,9 @@ def get_ai_response(prompt):
         "temperature": 0.5
     }
 
+    # ส่ง request พร้อม headers ใหม่
     response = requests.post(url, headers=headers, json=payload, timeout=30)
-    response.raise_for_status() # ตรวจสอบสถานะ HTTP Error
+    response.raise_for_status() # ตรวจสอบสถานะ HTTP Error (ถ้าไม่ใช่ 200 จะเกิด Exception)
 
     data = response.json()
 
