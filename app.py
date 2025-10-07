@@ -73,11 +73,11 @@ def get_ai_response(prompt):
     # 1. กำหนด Header โดยใช้ Authorization: Bearer
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {OPENAI_API_KEY}" # นี่คือส่วนที่แก้ไข
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
     }
     
-    # 2. URL สำหรับ OpenAI-compatible API (ไม่มี ?key=... ต่อท้าย)
-    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
+    # 2. URL สำหรับ OpenAI-compatible API
+    url = f"{OPENAI_API_BASE_URL}/api/chat/completions"
 
     payload = {
         # Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
