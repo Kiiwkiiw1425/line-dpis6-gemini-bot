@@ -84,7 +84,7 @@ def get_ai_response(prompt):
 
     payload = {
         #Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
-        "model": "HRMS OCSC",
+        "model": "hrms-dpis6",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
