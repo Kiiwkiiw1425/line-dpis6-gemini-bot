@@ -8,14 +8,16 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 # --- 1. ตั้งค่า Environment Variables (ต้องกำหนดใน Render) ---
 app = Flask(__name__)
-LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
-LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
+# *** FIX: เพิ่ม .strip() เพื่อตัดช่องว่างที่อาจติดมากับ ENV VARS ***
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN').strip() if os.environ.get('LINE_CHANNEL_ACCESS_TOKEN') else None
+LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET').strip() if os.environ.get('LINE_CHANNEL_SECRET') else None
+OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL').strip() if os.environ.get('OPENAI_API_BASE_URL') else None
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY').strip() if os.environ.get('OPENAI_API_KEY') else None
 
-# URL/IP ของ Open WebUI Server
-OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
-
-# API Key ที่กำหนดใน Open WebUI (ต้องเป็น Key ที่ถูกต้อง)
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
+# ตรวจสอบว่าตัวแปรสำคัญถูกโหลดแล้ว
+if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_CHANNEL_SECRET or not OPENAI_API_BASE_URL or not OPENAI_API_KEY:
+    print("FATAL: One or more critical environment variables (LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET, OPENAI_API_BASE_URL, OPENAI_API_KEY) are missing or empty.")
+    # ไม่ abort ในตอนนี้ แต่จะไปแจ้ง error ที่ LINE แทน
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -73,19 +75,23 @@ def handle_message(event):
 def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
+    # ตรวจสอบ Key ก่อนส่ง Request
+    if not OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is missing. Cannot proceed with API call.")
+        
     # 1. กำหนด Header โดยใช้ Authorization: Bearer
+    # *** FIX: .strip() ถูกใช้ตั้งแต่ตอนดึงค่าแล้ว ทำให้แน่ใจว่า Key สะอาด ***
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {OPENAI_API_KEY}" # ส่ง API Key ผ่าน Header
+        "Authorization": f"Bearer {OPENAI_API_KEY}" 
     }
     
     # 2. URL สำหรับ OpenAI-compatible API
     url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
 
     payload = {
-        #Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
-        #"model": "hrms-dpis6",
-        "model": "Gemini-2.0-flash-lite",
+        # Model ID ต้องตรงกับที่ตั้งค่าไว้ใน Open WebUI
+        "model": "hrms-dpis6",
         "messages": [
             {"role": "system", "content": "คุณคือผู้ช่วยผู้เชี่ยวชาญด้านโปรแกรม DPIS6 กรุณาตอบคำถามอย่างกระชับและเป็นมิตร"},
             {"role": "user", "content": prompt}
