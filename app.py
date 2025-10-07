@@ -6,15 +6,15 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
-# --- ตั้งค่า Environment Variables (กำหนดค่าใน Render) ---
+# --- 1. ตั้งค่า Environment Variables (ต้องกำหนดใน Render) ---
 app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
 LINE_CHANNEL_SECRET = os.environ.get('LINE_CHANNEL_SECRET')
 
-# URL/IP ของ Open WebUI Server 
+# URL/IP ของ Open WebUI Server
 OPENAI_API_BASE_URL = os.environ.get('OPENAI_API_BASE_URL') 
 
-# API Key ที่กำหนดใน Open WebUI
+# API Key ที่กำหนดใน Open WebUI (ต้องเป็น Key ที่ถูกต้อง)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')           
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
@@ -29,7 +29,7 @@ def health_check():
     """
     return 'OK', 200
 
-# --- Webhook Endpoint ที่ Line จะเรียก ---
+# --- 2. Webhook Endpoint ที่ Line จะเรียก ---
 @app.route("/webhook", methods=['POST'])
 def webhook():
     signature = request.headers['X-Line-Signature']
@@ -44,7 +44,7 @@ def webhook():
 
     return 'OK'
 
-# --- การจัดการข้อความ (Logic หลัก) ---
+# --- 3. การจัดการข้อความ (Logic หลัก) ---
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_message = event.message.text
@@ -69,17 +69,17 @@ def handle_message(event):
                 TextSendMessage(text="ขออภัยค่ะ ระบบ AI ขัดข้องชั่วคราว: " + str(e))
             )
 
-# --- ฟังก์ชันเชื่อมต่อ Open WebUI/Gemini ---
-    def get_ai_response(prompt):
+# --- 4. ฟังก์ชันเชื่อมต่อ Open WebUI/Gemini ---
+def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
-    # กำหนด Header โดยใช้ Authorization: Bearer
+    # 1. กำหนด Header โดยใช้ Authorization: Bearer
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {OPENAI_API_KEY}" # ส่ง API Key ผ่าน Header
     }
     
-    # URL สำหรับ OpenAI-compatible API
+    # 2. URL สำหรับ OpenAI-compatible API
     url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions"
 
     payload = {
@@ -103,7 +103,7 @@ def handle_message(event):
 
     return ai_text
 
-# --- สำหรับรันบน Render ---
+# --- 5. สำหรับรันบน Render ---
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
