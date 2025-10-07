@@ -61,13 +61,7 @@ def get_ai_response(prompt):
     """ส่ง Prompt ไปยัง Open WebUI API และรับคำตอบ"""
 
     # Open WebUI มักต้องการ /api/v1/chat/completions
-    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions" 
-
-    headers = {
-        # ใช้ Key ที่ตั้งไว้ใน Open WebUI 
-        "Authorization": f"Bearer {OPENAI_API_KEY}", 
-        "Content-Type": "application/json"
-    }
+    url = f"{OPENAI_API_BASE_URL}/api/v1/chat/completions?key={OPENAI_API_KEY}"
 
     payload = {
         # Model Name ต้องตรงกับ Model ID ที่ตั้งค่าไว้ใน Open WebUI
