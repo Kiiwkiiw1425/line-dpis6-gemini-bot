@@ -10,3 +10,7 @@ google-generativeai
 gunicorn
 
 chromadb
+
+requests
+
+google-cloud-firestore
