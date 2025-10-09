@@ -54,6 +54,16 @@ def handle_message(event):
     # ถ้าผู้ใช้เป็นคนพิมพ์มา (ไม่ใช่ bot)
     if event.source.type == 'user':
         try:
+            # --- โลจิกใหม่: ตรวจสอบ Outbound Connection ถ้าผู้ใช้พิมพ์ /check ---
+            if user_message.strip().lower() == '/check':
+                result = check_outbound_connection()
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text=result)
+                )
+                return # หยุดการทำงานไม่ให้ไปเรียก AI
+            # -----------------------------------------------------------------
+
             # *********** LOGIC การเรียก Open WebUI ***********
             ai_response = get_ai_response(user_message)
 
@@ -110,7 +120,30 @@ def get_ai_response(prompt):
 
     return ai_text
 
-# --- 5. สำหรับรันบน Render ---
+# --- 5. ฟังก์ชันสำหรับตรวจสอบ Outbound Connection (Firewall Test) ---
+def check_outbound_connection():
+    """
+    ทดสอบว่า Render สามารถเชื่อมต่อออกไปยังเว็บไซต์ภายนอกที่เป็นที่รู้จักได้หรือไม่
+    เพื่อวินิจฉัยปัญหา Firewall ขาออก
+    """
+    test_url = "https://www.google.com"
+    try:
+        response = requests.get(test_url, timeout=10)
+        
+        if response.status_code == 200:
+            return f"✅ การเชื่อมต่อขาออก (Outbound) ไปยัง {test_url} สำเร็จ (รหัส 200)\n\nข้อสรุป: Render ไมได้บล็อกการเชื่อมต่อภายนอกทั่วไป ปัญหาน่าจะจำกัดอยู่ที่ URL ของ Open WebUI เท่านั้น"
+        else:
+            return f"⚠️ การเชื่อมต่อขาออก (Outbound) ไปยัง {test_url} ล้มเหลว (รหัส {response.status_code})\n\nข้อสรุป: มีปัญหาการเชื่อมต่อขาออกของ Render ทั่วไป"
+            
+    except requests.exceptions.RequestException as e:
+        return f"❌ การเชื่อมต่อขาออก (Outbound) ล้มเหลวโดยสมบูรณ์: {e}\n\nข้อสรุป: Render อาจถูกจำกัด Firewall ขาออก หรือมีปัญหา DNS/Network (ต้องติดต่อ Support ของ Render)"
+
+
+# --- 6. สำหรับรันบน Render ---
 if __name__ == "__main__":
+    # ตรวจสอบว่าตัวแปรสำคัญถูกโหลดแล้วหรือไม่
+    if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_CHANNEL_SECRET or not OPENAI_API_BASE_URL or not OPENAI_API_KEY:
+        print("Starting app but critical ENV VARs are missing. Responses in Line may fail.")
+        
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
